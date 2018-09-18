@@ -1,0 +1,9 @@
+language: go
+
+go:
+  - 1.11.0
+
+install:
+  - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+
+script: dep ensure && make test

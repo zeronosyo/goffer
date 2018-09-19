@@ -24,5 +24,7 @@ test:
 clean:
 	rm -rf ./.vendor-new
 	rm -rf ./goffer
+	rm -rf ./goffer.exe
+	rm -rf ${GOPATH}/bin/goffer
 
 .PHONY: test build install

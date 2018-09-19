@@ -85,29 +85,36 @@ func main() {
 
 	var waitGroup sync.WaitGroup
 
-	doc.Find("body > div.rightrepeat > div.leftrepeat > div > center").Each(func(i int, center *goquery.Selection) {
-		center_text := filter_whitespace(center.Text())
-		for len(center_text) < 22 {
-			center_text = "　" + center_text
-		}
-		if i == 0 {
-			fmt.Printf("Title: %s\n", center_text)
-			return
-		}
-		center.Find("a").Each(func(j int, a *goquery.Selection) {
-			content := a.AttrOr("href", "")
-			waitGroup.Add(1)
-			go func(i, j int, center_text, content string) {
-				defer waitGroup.Done()
-				crawl_content, err := crawl(content)
-				if err != nil {
-					fmt.Printf("Review %s(%02d,%02d): Got Error - %s\n", center_text, i, j, err)
-					return
-				}
-				fmt.Printf("Review %s(%02d,%02d): %s(%s)\n", center_text, i, j, crawl_content.title, crawl_content.url)
-			}(i, j, center_text, content)
+	doc.Find("body > div.rightrepeat > div.leftrepeat > div > center").Each(
+		func(i int, center *goquery.Selection) {
+			center_text := filter_whitespace(center.Text())
+			for len(center_text) < 22 {
+				center_text = "　" + center_text
+			}
+			if i == 0 {
+				fmt.Printf("Title: %s\n", center_text)
+				return
+			}
+			center.Find("a").Each(func(j int, a *goquery.Selection) {
+				content := a.AttrOr("href", "")
+				waitGroup.Add(1)
+				go func(i, j int, center_text, content string) {
+					defer waitGroup.Done()
+					crawl_content, err := crawl(content)
+					if err != nil {
+						fmt.Printf(
+							"Review %s(%02d,%02d): Got Error - %s\n",
+							center_text, i, j, err,
+						)
+						return
+					}
+					fmt.Printf(
+						"Review %s(%02d,%02d): %s(%s)\n",
+						center_text, i, j, crawl_content.title, crawl_content.url,
+					)
+				}(i, j, center_text, content)
+			})
+			//
 		})
-		//
-	})
 	waitGroup.Wait()
 }

@@ -25,6 +25,10 @@
 #   unused-packages = true
 
 
+[[constraint]]
+  name = "github.com/PuerkitoBio/goquery"
+  version = "1.4.1"
+
 [prune]
   go-tests = true
   unused-packages = true

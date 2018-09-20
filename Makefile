@@ -27,8 +27,6 @@ install: dep_ensure
 	go install ./...
 	go install ./vendor/...
 
-install_linters: dep_ensure
-
 dep_ensure:
 	dep ensure
 

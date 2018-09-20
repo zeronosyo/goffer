@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# Make lints before commit made.
+# Dependencies:
+#     1. go install gometalinter
+#     2. gometalinter --install
+#     3. brew install ack
+# To use it:
+#
+#     cd $GOPATH/src/github.com/zeronosyo/goffer
+#     ln -s $PWD/tools/pre-commit .git/hooks/pre-commit
+#
+LINT_DIRS=""
+FILENAMES=$(git diff --name-only --cached --diff-filter=ACMRTUXB | ack "^(($LINT_DIRS)(?=/).)?[^/]*\.go$")
+
+if [ ! -z "$FILENAMES" ]
+then
+  gometalinter --enable-all --aggregate --vendor --errors --fast $FILENAMES
+fi

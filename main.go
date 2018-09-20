@@ -25,7 +25,8 @@ func filterWhitespace(orig string) string {
 	return clearedSpaceNewline
 }
 
-func randint(min int, max int) int {
+// RandInt generate random int in range [min, max].
+func RandInt(min int, max int) int {
 	return rand.Intn(max-min) + min
 }
 
@@ -43,7 +44,7 @@ func crawl(url string) (*CrawlContent, error) {
 	}
 	content.url = url
 	// FIXME
-	time.Sleep(time.Duration(randint(10, 5000)) * time.Millisecond)
+	time.Sleep(time.Duration(RandInt(10, 5000)) * time.Millisecond)
 	res, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)

@@ -6,7 +6,7 @@ help:
 	@echo "  make clean  - clean file generate by `make install`"
 	@echo "  make lint  - lint all go source code by a lot linters"
 
-lint: install_linters
+lint:
 	gometalinter \
 		--enable-all \
 		--fast \
@@ -16,9 +16,6 @@ lint: install_linters
 		--aggregate \
 		--vendor \
 		./...
-
-install_linters:
-	gometalinter --install
 
 build-linux: dep_ensure
 	GOOS=linux GOARCH=amd64 go build -o goffer
@@ -35,7 +32,7 @@ install_linters: dep_ensure
 dep_ensure:
 	dep ensure
 
-test: lint
+test: install lint
 	@echo "Passed"
 
 clean:

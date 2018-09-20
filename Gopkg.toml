@@ -24,7 +24,6 @@
 #   go-tests = true
 #   unused-packages = true
 
-required = ["github.com/alecthomas/gometalinter"]
 
 [[constraint]]
   name = "github.com/PuerkitoBio/goquery"

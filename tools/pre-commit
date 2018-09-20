@@ -15,5 +15,5 @@ FILENAMES=$(git diff --name-only --cached --diff-filter=ACMRTUXB | ack "^(($LINT
 
 if [ ! -z "$FILENAMES" ]
 then
-  gometalinter --enable-all --aggregate --vendor --errors --fast $FILENAMES
+  gometalinter --enable-all --aggregate --vendor --errors --fast --enable=safesql --disable=gosec $FILENAMES
 fi

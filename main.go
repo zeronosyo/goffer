@@ -1,16 +1,17 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+
+	"github.com/zeronosyo/goffer/utils"
+  "github.com/zeronosyo/goffer/exc"
 )
 
 // CrawlContent represent content crawl from network.
@@ -19,22 +20,11 @@ type CrawlContent struct {
 	url   string
 }
 
-func filterWhitespace(orig string) string {
-	clearedSpace := strings.Replace(orig, " ", "", -1)
-	clearedSpaceNewline := strings.Replace(clearedSpace, "\n", "", -1)
-	return clearedSpaceNewline
-}
-
-// RandInt generate random int in range [min, max].
-func RandInt(min int, max int) int {
-	return rand.Intn(max-min) + min
-}
-
 func crawl(url string) (*CrawlContent, error) {
 	content := &CrawlContent{}
-	if url == "" {
-		return nil, errors.New("No url")
-	}
+  if url == "" {
+    return nil, exc.RaiseHttpExc(404, "No url")
+  }
 	if !strings.HasPrefix(url, "http:") {
 		if strings.HasPrefix(url, "..") {
 			url = "http://dotproducer.kan-be.com" + url[2:len(url)-1]
@@ -44,7 +34,7 @@ func crawl(url string) (*CrawlContent, error) {
 	}
 	content.url = url
 	// FIXME
-	time.Sleep(time.Duration(RandInt(10, 5000)) * time.Millisecond)
+	time.Sleep(time.Duration(utils.RandInt(10, 5000)) * time.Millisecond)
 	res, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -54,7 +44,7 @@ func crawl(url string) (*CrawlContent, error) {
 		if res.StatusCode != 404 {
 			log.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
 		}
-		return nil, errors.New("Page not found: " + content.url)
+		return nil, &exc.ErrPageNotFound
 	}
 
 	doc, err := goquery.NewDocumentFromReader(res.Body)
@@ -64,7 +54,7 @@ func crawl(url string) (*CrawlContent, error) {
 
 	doc.Find("body center").Each(func(i int, center *goquery.Selection) {
 		if i == 0 {
-			content.title = filterWhitespace(center.Text())
+			content.title = strings.TrimSpace(center.Text())
 		}
 	})
 	return content, nil
@@ -87,10 +77,14 @@ func main() {
 
 	var waitGroup sync.WaitGroup
 
-	doc.Find("body > div.rightrepeat > div.leftrepeat > div > center").Each(
+	doc.Find("body center").Each(
 		func(i int, center *goquery.Selection) {
-			centerText := filterWhitespace(center.Text())
-			for len(centerText) < 22 {
+			centerText := strings.TrimSpace(center.Text())
+			if strings.HasSuffix(centerText, "New") {
+				centerText = centerText[:len(centerText)-4]
+			}
+			centerText = strings.TrimSpace(centerText)
+			for len(centerText) < 24 {
 				centerText = "　" + centerText
 			}
 			if i == 0 {
@@ -104,19 +98,15 @@ func main() {
 					defer waitGroup.Done()
 					crawlContent, err := crawl(content)
 					if err != nil {
-						fmt.Printf(
-							"Review %s(%02d,%02d): Got Error - %s\n",
-							centerText, i, j, err,
-						)
+						// fmt.Printf("Review %s(%02d,%02d): Got Error - %s\n", centerText, i, j, err)
 						return
 					}
 					fmt.Printf(
-						"Review %s(%02d,%02d): %s(%s)\n",
+						"Review %9s(%02d,%02d): %s(%s)\n",
 						centerText, i, j, crawlContent.title, crawlContent.url,
 					)
 				}(i, j, centerText, content)
 			})
-			//
 		})
 	waitGroup.Wait()
 }

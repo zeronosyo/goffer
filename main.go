@@ -13,15 +13,16 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+// CrawlContent represent content crawl from network.
 type CrawlContent struct {
 	title string
 	url   string
 }
 
-func filter_whitespace(orig string) string {
-	cleared_space := strings.Replace(orig, " ", "", -1)
-	cleared_space_and_newline := strings.Replace(cleared_space, "\n", "", -1)
-	return cleared_space_and_newline
+func filterWhitespace(orig string) string {
+	clearedSpace := strings.Replace(orig, " ", "", -1)
+	clearedSpaceNewline := strings.Replace(clearedSpace, "\n", "", -1)
+	return clearedSpaceNewline
 }
 
 func randint(min int, max int) int {
@@ -62,7 +63,7 @@ func crawl(url string) (*CrawlContent, error) {
 
 	doc.Find("body center").Each(func(i int, center *goquery.Selection) {
 		if i == 0 {
-			content.title = filter_whitespace(center.Text())
+			content.title = filterWhitespace(center.Text())
 		}
 	})
 	return content, nil
@@ -87,12 +88,12 @@ func main() {
 
 	doc.Find("body > div.rightrepeat > div.leftrepeat > div > center").Each(
 		func(i int, center *goquery.Selection) {
-			center_text := filter_whitespace(center.Text())
-			for len(center_text) < 22 {
-				center_text = "　" + center_text
+			centerText := filterWhitespace(center.Text())
+			for len(centerText) < 22 {
+				centerText = "　" + centerText
 			}
 			if i == 0 {
-				fmt.Printf("Title: %s\n", center_text)
+				fmt.Printf("Title: %s\n", centerText)
 				return
 			}
 			center.Find("a").Each(func(j int, a *goquery.Selection) {
@@ -100,19 +101,19 @@ func main() {
 				waitGroup.Add(1)
 				go func(i, j int, center_text, content string) {
 					defer waitGroup.Done()
-					crawl_content, err := crawl(content)
+					crawlContent, err := crawl(content)
 					if err != nil {
 						fmt.Printf(
 							"Review %s(%02d,%02d): Got Error - %s\n",
-							center_text, i, j, err,
+							centerText, i, j, err,
 						)
 						return
 					}
 					fmt.Printf(
 						"Review %s(%02d,%02d): %s(%s)\n",
-						center_text, i, j, crawl_content.title, crawl_content.url,
+						centerText, i, j, crawlContent.title, crawlContent.url,
 					)
-				}(i, j, center_text, content)
+				}(i, j, centerText, content)
 			})
 			//
 		})

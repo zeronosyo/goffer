@@ -6,13 +6,20 @@ import (
   "regexp"
 	"strings"
 
-  "golang.org/x/net/html"
+  "github.com/integrii/flaggy"
 	"github.com/PuerkitoBio/goquery"
+  "golang.org/x/net/html"
 )
+
+var cfgFn string
+
+func init() {
+  flaggy.String(&cfgFn, "c", "config", "config file of crawler.")
+}
 
 func Crawl(base *url.URL, doc *goquery.Document) (*CrawlContent, error) {
 	crawlContent := &CrawlContent{}
-  config, err := readConfigFile("assets/kanbe.yml")
+  config, err := readConfigFile(cfgFn)
   if err != nil {
     log.Fatal(err)
   }

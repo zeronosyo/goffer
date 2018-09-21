@@ -18,6 +18,14 @@
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:2f7d86b837288de980026af93be9a6fd9797c6b32f79af4484bc73f2e57b4ac4"
+  name = "github.com/integrii/flaggy"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "f984caf11202679c1af76286c324d281cbe0da94"
+  version = "1.1.0"
+
+[[projects]]
   branch = "master"
   digest = "1:a5ae8f624991c4156ab2610befdbc78ea3a961473ce4846cc34342649cb81878"
   name = "golang.org/x/net"
@@ -67,6 +75,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/PuerkitoBio/goquery",
+    "github.com/integrii/flaggy",
     "golang.org/x/net/html",
     "golang.org/x/text/encoding/htmlindex",
     "gopkg.in/yaml.v2",

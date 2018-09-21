@@ -7,6 +7,7 @@ import (
 	"sync"
   "net/url"
 
+  "github.com/integrii/flaggy"
 	"github.com/PuerkitoBio/goquery"
 
   "github.com/zeronosyo/goffer/exc"
@@ -14,6 +15,7 @@ import (
 )
 
 func main() {
+  flaggy.Parse()
   doc, err := crawl.QueryUrl("http://dotproducer.kan-be.com/seiti/seiti.html")
   if err != nil {
     log.Fatal(err)

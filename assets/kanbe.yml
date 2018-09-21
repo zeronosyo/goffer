@@ -1,0 +1,15 @@
+---
+title:
+  selector:
+    path: body center
+  index: 0
+
+content:
+  selector:
+    path: body > div.rightrepeat > div.leftrepeat > div
+  start: ^\s*場所：
+  location: ^\s*場所：\s*(.*?)\s*$
+  name: before image
+  image:
+    tag: img
+    attr: src

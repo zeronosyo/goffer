@@ -5,5 +5,5 @@ Goffer
 
 ---
 
-#### Usage
+### Usage
 Just type: `goffer -c assets/kanbe.yml`

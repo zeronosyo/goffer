@@ -27,14 +27,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a5ae8f624991c4156ab2610befdbc78ea3a961473ce4846cc34342649cb81878"
+  digest = "1:afd623c23f862e01d1b29377b691a65e1ac8aa5df6674eb79d19a16ba95947e9"
   name = "golang.org/x/net"
   packages = [
     "html",
     "html/atom",
   ]
   pruneopts = "UT"
-  revision = "26e67e76b6c3f6ce91f7c52def5af501b4e0f3a2"
+  revision = "2f5d2388922f370f4355f327fcf4cfe9f5583908"
 
 [[projects]]
   digest = "1:aa4d6967a3237f8367b6bf91503964a77183ecf696f1273e8ad3551bb4412b5f"

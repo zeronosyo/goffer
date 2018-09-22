@@ -29,6 +29,22 @@
   name = "github.com/PuerkitoBio/goquery"
   version = "1.4.1"
 
+[[constraint]]
+  name = "github.com/integrii/flaggy"
+  version = "1.1.0"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/net"
+
+[[constraint]]
+  name = "golang.org/x/text"
+  version = "0.3.0"
+
+[[constraint]]
+  name = "gopkg.in/yaml.v2"
+  version = "2.2.1"
+
 [prune]
   go-tests = true
   unused-packages = true

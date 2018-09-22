@@ -65,10 +65,14 @@ func main() {
 						// fmt.Printf("Review %s(%02d,%02d): Got Error - %s\n", centerText, i, j, err)
 						return
 					}
+          var content string
+          for idx, pos := range crawlContent.Content {
+            content += fmt.Sprintf("%d: %s(%s),", idx, pos.Name, pos.Image)
+          }
 					fmt.Printf(
 						"Review %9s(%02d,%02d): %s(%s) - (%s) - %s\n",
-						centerText, i, j, crawlContent.Title, docUrl, crawlContent.Location,
-            strings.Join(crawlContent.Content, ","),
+						centerText, i, j, crawlContent.Title,
+            docUrl, crawlContent.Location, content,
 					)
 				}(i, j, centerText, href)
 			})

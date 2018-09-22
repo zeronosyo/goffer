@@ -15,11 +15,16 @@ import (
   "github.com/zeronosyo/goffer/exc"
 )
 
+type position struct {
+  Name string
+  Image string
+}
+
 // CrawlContent represent content crawl from network.
 type CrawlContent struct {
 	Title string
 	Url   string
-  Content []string
+  Content []*position
   Location string
 }
 
@@ -38,9 +43,10 @@ type content struct {
   Selector selector `yaml:"selector"`
   Start string `yaml:"start"`
   Location string `yaml:"location"`
-  Name string `yaml:"name"`
+  Name int `yaml:"name"`
   Image selector `yaml:"image"`
   End selector `yaml:"end"`
+  Filter []string `yaml:"filter"`
 }
 
 type conf struct {

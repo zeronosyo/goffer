@@ -9,7 +9,14 @@ content:
     path: body > div.rightrepeat > div.leftrepeat > div
   start: ^\s*場所：
   location: ^\s*場所：\s*(.*?)\s*$
-  name: before image
+  name: -1
   image:
     tag: img
     attr: src
+  filter:
+    - 難易度
+    - 羞恥心
+    - 迷惑度
+  end:
+    path: body div.rightrepeat div.leftrepeat div center table tbody tr a img
+    attr: alt == TOP

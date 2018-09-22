@@ -24,47 +24,52 @@ func Crawl(base *url.URL, doc *goquery.Document) (*CrawlContent, error) {
     log.Fatal(err)
   }
 
-	doc.Find(config.Title.Selector.Path).EachWithBreak(func(i int, center *goquery.Selection) bool {
+	doc.Find(config.Title.Selector.Path).Each(func(i int, center *goquery.Selection) {
 		if i == config.Title.Index {
 			crawlContent.Title = strings.TrimSpace(center.Text())
-      return false
 		}
-    return true
 	})
   crawlContent.Content = make([]*position, 0)
   startRegexp := regexp.MustCompile(config.Content.Start)
   startFlag := false
+  endFlag := false
   locationRegexp := regexp.MustCompile(config.Content.Location)
   if config.Content.Name < 0 {
   } else if config.Content.Name > 0 {
   }
-  var contentProcess func(int, *goquery.Selection) bool
-  contentProcess = func(i int, content *goquery.Selection) bool {
-    if content.Is(config.Content.End.Path) {
-      end := config.Content.End
-      if end.Attr == "" && end.Path == "" && end.Tag == "" {
-        return false
-      }
-      attr_pair := strings.Split(config.Content.End.Attr, "==")
-      if len(attr_pair) > 0 {
-        attr_key := strings.TrimSpace(attr_pair[0])
-        if attr_key != "" {
-          attr_value := content.AttrOr(attr_key, "")
-          if len(attr_pair) == 2  {
-            if attr_value == strings.TrimSpace(attr_pair[1]) {
-              return false
+  var contentProcess func(int, *goquery.Selection)
+  contentProcess = func(i int, content *goquery.Selection) {
+    if endFlag {
+      return
+    }
+    end := config.Content.End
+    if end.Path != "" {
+      if content.Is(config.Content.End.Path) {
+        endFlag = true
+        attr_pair := strings.Split(config.Content.End.Attr, "==")
+        if len(attr_pair) > 0 {
+          attr_key := strings.TrimSpace(attr_pair[0])
+          if attr_key != "" {
+            attr_value := content.AttrOr(attr_key, "")
+            if len(attr_pair) == 2  {
+              if attr_value != strings.TrimSpace(attr_pair[1]) {
+                endFlag = false
+              }
+            } else if attr_value == "" {
+              endFlag = false
             }
-          } else {
-            return false
+          }
+        }
+        tag := end.Tag
+        if tag != "" {
+          if content.Nodes[0].Type != html.ElementNode || content.Nodes[0].Data != tag {
+            endFlag = false
           }
         }
       }
-      tag := end.Tag
-      if tag != "" {
-        if content.Nodes[0].Type == html.ElementNode && content.Nodes[0].Data == tag {
-          return false
-        }
-      }
+    }
+    if endFlag {
+      return
     }
     if crawlContent.Location == "" {
       match := locationRegexp.FindStringSubmatch(content.Text())
@@ -76,8 +81,9 @@ func Crawl(base *url.URL, doc *goquery.Document) (*CrawlContent, error) {
       indexes := startRegexp.FindStringSubmatchIndex(content.Text())
       if len(indexes) > 0 {
         startFlag = true
+      } else {
+        return
       }
-      return true
     }
     posImage := 0
     for _, node := range content.Nodes {
@@ -89,7 +95,7 @@ func Crawl(base *url.URL, doc *goquery.Document) (*CrawlContent, error) {
           if imageSrc != "" {
             imageUrl, err := url.Parse(imageSrc)
             if err != nil {
-              return true
+              return
             }
             imageUrl = base.ResolveReference(imageUrl)
             if len(crawlContent.Content) > 0 {
@@ -152,14 +158,13 @@ func Crawl(base *url.URL, doc *goquery.Document) (*CrawlContent, error) {
       default:
         // TODO raise exception
         log.Fatalf("Got unknown node type %d", node.Type)
-        return false
+        return
       }
     }
-    content.Children().EachWithBreak(func(i int, content *goquery.Selection) bool {
-      return contentProcess(i, content)
+    content.Children().Each(func(i int, content *goquery.Selection) {
+      contentProcess(i, content)
     })
-    return true
   }
-	doc.Find(config.Content.Selector.Path).Contents().EachWithBreak(contentProcess)
+	doc.Find(config.Content.Selector.Path).Contents().Each(contentProcess)
 	return crawlContent, nil
 }

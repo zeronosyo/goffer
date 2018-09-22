@@ -18,5 +18,6 @@ content:
     - 羞恥心
     - 迷惑度
   end:
-    path: body div.rightrepeat div.leftrepeat div center table tbody tr a img
+    path: img
+    tag: img
     attr: alt == TOP

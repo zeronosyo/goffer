@@ -17,7 +17,10 @@ content:
     - 難易度
     - 羞恥心
     - 迷惑度
-  end:
+    - "[A-D]"
+
+end:
+  selector:
     path: img
     tag: img
     attr: alt == TOP

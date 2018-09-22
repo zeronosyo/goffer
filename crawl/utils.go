@@ -45,13 +45,17 @@ type content struct {
   Location string `yaml:"location"`
   Name int `yaml:"name"`
   Image selector `yaml:"image"`
-  End selector `yaml:"end"`
   Filter []string `yaml:"filter"`
+}
+
+type end struct {
+  Selector selector `yaml:"selector"`
 }
 
 type conf struct {
   Title title `yaml:"title"`
   Content content `yaml:"content"`
+  End end `yaml:"end"`
 }
 
 func decodeResponse(body io.Reader, header http.Header) (*html.Node, error) {

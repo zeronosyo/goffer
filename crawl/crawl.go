@@ -30,23 +30,24 @@ func Crawl(base *url.URL, doc *goquery.Document) (*CrawlContent, error) {
 		}
 	})
   crawlContent.Content = make([]*position, 0)
-  startRegexp := regexp.MustCompile(config.Content.Start)
+  startRegexp := regexp.MustCompile("(?im)" + config.Content.Start)
   startFlag := false
   endFlag := false
   locationRegexp := regexp.MustCompile(config.Content.Location)
-  if config.Content.Name < 0 {
-  } else if config.Content.Name > 0 {
+  filters := make([]*regexp.Regexp, len(config.Content.Filter), len(config.Content.Filter))
+  for idx, reg := range config.Content.Filter {
+    filters[idx] = regexp.MustCompile("(?im)" + reg)
   }
   var contentProcess func(int, *goquery.Selection)
   contentProcess = func(i int, content *goquery.Selection) {
     if endFlag {
       return
     }
-    end := config.Content.End
+    end := config.End.Selector
     if end.Path != "" {
-      if content.Is(config.Content.End.Path) {
+      if content.Is(end.Path) {
         endFlag = true
-        attr_pair := strings.Split(config.Content.End.Attr, "==")
+        attr_pair := strings.Split(end.Attr, "==")
         if len(attr_pair) > 0 {
           attr_key := strings.TrimSpace(attr_pair[0])
           if attr_key != "" {
@@ -120,8 +121,8 @@ func Crawl(base *url.URL, doc *goquery.Document) (*CrawlContent, error) {
           }
         default:
           text := strings.TrimSpace(content.Text())
-          for _, t := range config.Content.Filter {
-            if strings.Contains(text, t) {
+          for _, matcher := range filters {
+            if len(matcher.FindStringSubmatchIndex(text)) > 0 {
               text = ""
               break
             }
@@ -139,8 +140,8 @@ func Crawl(base *url.URL, doc *goquery.Document) (*CrawlContent, error) {
         }
       case html.TextNode:
         text := strings.TrimSpace(content.Text())
-        for _, t := range config.Content.Filter {
-          if strings.Contains(text, t) {
+        for _, matcher := range filters {
+          if len(matcher.FindStringSubmatchIndex(text)) > 0 {
             text = ""
             break
           }

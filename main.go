@@ -57,7 +57,7 @@ func main() {
           doc, err := crawl.QueryUrl(docUrl.String())
           if err != nil {
             // log.Fatal(err)
-            fmt.Printf("Query %s got error: %s", docUrl, err)
+            fmt.Printf("Query %s got error: %s\n", docUrl, err)
             return
           }
           crawlContent, err := crawl.Crawl(docUrl, doc)

@@ -130,51 +130,30 @@ func (c *crawl) Content() []*position {
 			}
 		}
 		for _, node := range content.Nodes {
-			switch node.Type {
-			case html.ElementNode:
-				switch node.Data {
-				case config.Content.Image.Tag:
-					imageSrc := content.AttrOr("src", "")
-					if imageSrc != "" {
-						imageUrl, err := url.Parse(imageSrc)
-						if err != nil {
-							return
-						}
-						imageUrl = c.url.ResolveReference(imageUrl)
-						pos := position{Image: imageUrl.String()}
-						if config.Content.Name < 0 {
-							namePos := len(c.content) + config.Content.Name
-							lastPos := len(c.content) - 1
-							if namePos >= 0 && namePos < len(c.content) {
-								if c.content[namePos].Image == "" && c.content[namePos].Name != "" {
-									pos.Name = c.content[namePos].Name
-								} else if c.content[lastPos].Image != "" && c.content[lastPos].Name != "" {
-									pos.Name = c.content[lastPos].Name
-								}
+			switch {
+			case node.Type == html.ElementNode && node.Data == config.Content.Image.Tag:
+				imageSrc := content.AttrOr("src", "")
+				if imageSrc != "" {
+					imageUrl, err := url.Parse(imageSrc)
+					if err != nil {
+						return
+					}
+					imageUrl = c.url.ResolveReference(imageUrl)
+					pos := position{Image: imageUrl.String()}
+					if config.Content.Name < 0 {
+						namePos := len(c.content) + config.Content.Name
+						lastPos := len(c.content) - 1
+						if namePos >= 0 && namePos < len(c.content) {
+							if c.content[namePos].Image == "" && c.content[namePos].Name != "" {
+								pos.Name = c.content[namePos].Name
+							} else if c.content[lastPos].Image != "" && c.content[lastPos].Name != "" {
+								pos.Name = c.content[lastPos].Name
 							}
 						}
-						c.content = append(c.content, &pos)
 					}
-				default:
-					text := strings.TrimSpace(content.Text())
-					for _, matcher := range filters {
-						if len(matcher.FindStringSubmatchIndex(text)) > 0 {
-							text = ""
-							break
-						}
-					}
-					if text != "" {
-						if config.Content.Name > 0 {
-							for _, pos := range c.content {
-								if pos.Name == "" && pos.Image != "" {
-									pos.Name = text
-								}
-							}
-						}
-						c.content = append(c.content, &position{Name: text})
-					}
+					c.content = append(c.content, &pos)
 				}
-			case html.TextNode:
+			case (node.Type == html.ElementNode && node.Data != config.Content.Image.Tag) || node.Type == html.TextNode:
 				text := strings.TrimSpace(content.Text())
 				for _, matcher := range filters {
 					if len(matcher.FindStringSubmatchIndex(text)) > 0 {

@@ -3,6 +3,9 @@ language: go
 go:
   - 1.11.0
 
+services:
+  - redis-server
+
 cache:
   directories:
     - $GOPATH

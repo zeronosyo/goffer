@@ -21,7 +21,9 @@ type crawl struct {
 	url      *url.URL
 	doc      *goquery.Document
 	config   *Config
+	title    string
 	location string
+	content  []*position
 }
 
 func New(url *url.URL, doc *goquery.Document) (*crawl, error) {
@@ -74,7 +76,10 @@ func (c *crawl) Location() string {
 }
 
 func (c *crawl) Content() []*position {
-	positions := make([]*position, 0)
+	if c.content != nil {
+		return c.content
+	}
+	c.content = make([]*position, 0)
 	config := c.config
 	startRegexp := regexp.MustCompile("(?im)" + config.Content.Start)
 	startFlag := false
@@ -137,25 +142,25 @@ func (c *crawl) Content() []*position {
 							return
 						}
 						imageUrl = c.url.ResolveReference(imageUrl)
-						if len(positions) > 0 {
+						if len(c.content) > 0 {
 							if config.Content.Name < 0 {
-								if positions[len(positions)-1].Image == "" {
-									posImage = len(positions)
+								if c.content[len(c.content)-1].Image == "" {
+									posImage = len(c.content)
 								}
 							} else if config.Content.Name > 0 {
-								if positions[len(positions)-1].Image != "" {
-									posImage = len(positions)
+								if c.content[len(c.content)-1].Image != "" {
+									posImage = len(c.content)
 								}
 							}
 						}
 						namePos := posImage + config.Content.Name
 						var pos position
-						if namePos >= 0 && namePos < len(positions) {
-							pos = position{Name: positions[namePos].Name, Image: imageUrl.String()}
+						if namePos >= 0 && namePos < len(c.content) {
+							pos = position{Name: c.content[namePos].Name, Image: imageUrl.String()}
 						} else {
 							pos = position{Image: imageUrl.String()}
 						}
-						positions = append(positions, &pos)
+						c.content = append(c.content, &pos)
 					}
 				default:
 					text := strings.TrimSpace(content.Text())
@@ -166,14 +171,14 @@ func (c *crawl) Content() []*position {
 						}
 					}
 					if text != "" {
-						if config.Content.Name == len(positions)-posImage {
-							for _, pos := range positions {
+						if config.Content.Name == len(c.content)-posImage {
+							for _, pos := range c.content {
 								if pos.Name == "" {
 									pos.Name = text
 								}
 							}
 						}
-						positions = append(positions, &position{Name: text})
+						c.content = append(c.content, &position{Name: text})
 					}
 				}
 			case html.TextNode:
@@ -185,14 +190,14 @@ func (c *crawl) Content() []*position {
 					}
 				}
 				if text != "" {
-					if config.Content.Name == len(positions)-posImage {
-						for _, pos := range positions {
+					if config.Content.Name == len(c.content)-posImage {
+						for _, pos := range c.content {
 							if pos.Name == "" {
 								pos.Name = text
 							}
 						}
 					}
-					positions = append(positions, &position{Name: text})
+					c.content = append(c.content, &position{Name: text})
 				}
 			default:
 				// TODO raise exception
@@ -201,5 +206,5 @@ func (c *crawl) Content() []*position {
 			}
 		}
 	})
-	return positions
+	return c.content
 }

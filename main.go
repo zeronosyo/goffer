@@ -3,23 +3,23 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"strings"
 	"sync"
-  "net/url"
 
-  "github.com/integrii/flaggy"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/integrii/flaggy"
 
-  "github.com/zeronosyo/goffer/exc"
-  "github.com/zeronosyo/goffer/crawl"
+	"github.com/zeronosyo/goffer/crawl"
+	"github.com/zeronosyo/goffer/exc"
 )
 
 func main() {
-  flaggy.Parse()
-  doc, err := crawl.QueryUrl("http://dotproducer.kan-be.com/seiti/seiti.html")
-  if err != nil {
-    log.Fatal(err)
-  }
+	flaggy.Parse()
+	doc, err := crawl.QueryUrl("http://dotproducer.kan-be.com/seiti/seiti.html")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	var waitGroup sync.WaitGroup
 
@@ -42,37 +42,37 @@ func main() {
 				waitGroup.Add(1)
 				go func(i, j int, center_text, href string) {
 					defer waitGroup.Done()
-          if href == "" {
-            log.Fatal(exc.RaiseHttpExc(404, "No url"))
-          }
-          docUrl, err := url.Parse(href)
-          if err != nil {
-            return
-          }
-          base, err := url.Parse("http://dotproducer.kan-be.com/seiti/")
-          if err != nil {
-            return
-          }
-          docUrl = base.ResolveReference(docUrl)
-          doc, err := crawl.QueryUrl(docUrl.String())
-          if err != nil {
-            // log.Fatal(err)
-            fmt.Printf("Query %s got error: %s\n", docUrl, err)
-            return
-          }
-          crawlContent, err := crawl.Crawl(docUrl, doc)
+					if href == "" {
+						log.Fatal(exc.RaiseHttpExc(404, "No url"))
+					}
+					docUrl, err := url.Parse(href)
 					if err != nil {
-						// fmt.Printf("Review %s(%02d,%02d): Got Error - %s\n", centerText, i, j, err)
 						return
 					}
-          var content string
-          for idx, pos := range crawlContent.Content {
-            content += fmt.Sprintf("%d: %s(%s),", idx, pos.Name, pos.Image)
-          }
+					base, err := url.Parse("http://dotproducer.kan-be.com/seiti/")
+					if err != nil {
+						return
+					}
+					docUrl = base.ResolveReference(docUrl)
+					doc, err := crawl.QueryUrl(docUrl.String())
+					if err != nil {
+						// log.Fatal(err)
+						fmt.Printf("Query %s got error: %s\n", docUrl, err)
+						return
+					}
+					c, err := crawl.New(docUrl, doc)
+					if err != nil {
+						fmt.Printf("Review %s(%02d,%02d): Got Error - %s\n", centerText, i, j, err)
+						return
+					}
+					var content string
+					for idx, pos := range c.Content() {
+						content += fmt.Sprintf("%d: %s(%s),", idx, pos.Name, pos.Image)
+					}
 					fmt.Printf(
 						"Review %9s(%02d,%02d): %s(%s) - (%s) - %s\n",
-						centerText, i, j, crawlContent.Title,
-            docUrl, crawlContent.Location, content,
+						centerText, i, j, c.Title(),
+						docUrl, c.Location(), content,
 					)
 				}(i, j, centerText, href)
 			})

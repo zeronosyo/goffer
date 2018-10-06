@@ -129,7 +129,6 @@ func (c *crawl) Content() []*position {
 				return
 			}
 		}
-		posImage := 0
 		for _, node := range content.Nodes {
 			switch node.Type {
 			case html.ElementNode:
@@ -142,23 +141,17 @@ func (c *crawl) Content() []*position {
 							return
 						}
 						imageUrl = c.url.ResolveReference(imageUrl)
-						if len(c.content) > 0 {
-							if config.Content.Name < 0 {
-								if c.content[len(c.content)-1].Image == "" {
-									posImage = len(c.content)
-								}
-							} else if config.Content.Name > 0 {
-								if c.content[len(c.content)-1].Image != "" {
-									posImage = len(c.content)
+						pos := position{Image: imageUrl.String()}
+						if config.Content.Name < 0 {
+							namePos := len(c.content) + config.Content.Name
+							lastPos := len(c.content) - 1
+							if namePos >= 0 && namePos < len(c.content) {
+								if c.content[namePos].Image == "" && c.content[namePos].Name != "" {
+									pos.Name = c.content[namePos].Name
+								} else if c.content[lastPos].Image != "" && c.content[lastPos].Name != "" {
+									pos.Name = c.content[lastPos].Name
 								}
 							}
-						}
-						namePos := posImage + config.Content.Name
-						var pos position
-						if namePos >= 0 && namePos < len(c.content) {
-							pos = position{Name: c.content[namePos].Name, Image: imageUrl.String()}
-						} else {
-							pos = position{Image: imageUrl.String()}
 						}
 						c.content = append(c.content, &pos)
 					}
@@ -171,9 +164,9 @@ func (c *crawl) Content() []*position {
 						}
 					}
 					if text != "" {
-						if config.Content.Name == len(c.content)-posImage {
+						if config.Content.Name > 0 {
 							for _, pos := range c.content {
-								if pos.Name == "" {
+								if pos.Name == "" && pos.Image != "" {
 									pos.Name = text
 								}
 							}
@@ -190,9 +183,9 @@ func (c *crawl) Content() []*position {
 					}
 				}
 				if text != "" {
-					if config.Content.Name == len(c.content)-posImage {
+					if config.Content.Name > 0 {
 						for _, pos := range c.content {
-							if pos.Name == "" {
+							if pos.Name == "" && pos.Image != "" {
 								pos.Name = text
 							}
 						}

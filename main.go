@@ -65,8 +65,14 @@ func main() {
 						fmt.Printf("Review %s(%02d,%02d): Got Error - %s\n", centerText, i, j, err)
 						return
 					}
+					if c.Title() == "" || len(c.Locations()) == 0 || len(c.Content()) == 0 {
+						return
+					}
 					var content string
 					for idx, pos := range c.Content() {
+						if pos.Image == "" {
+							continue
+						}
 						content += fmt.Sprintf("%d: %s(%s),", idx, pos.Name, pos.Image)
 					}
 					fmt.Printf(

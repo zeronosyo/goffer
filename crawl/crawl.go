@@ -166,10 +166,22 @@ func (c *crawl) Content() []*position {
 					}
 				}
 				if text != "" {
-					if config.Content.Name > 0 {
-						for _, pos := range c.content {
-							if pos.Name == "" && pos.Image != "" {
-								pos.Name = text
+					if len(c.content) >= i {
+						for i := config.Content.Name; i > 0; i-- {
+							if c.content[len(c.content)-i].Image != "" {
+								// 有图片数据, skip
+								break
+							}
+							if i > 1 {
+								// 还有未判断元素, 继续迭代
+								continue
+							}
+							// 从第(len(c.content)-config.Content.Name)个元素到最后一个元素都是文字
+							// 则给前面的图片数据添加上当前元素的文字信息
+							for _, pos := range c.content {
+								if pos.Name == "" && pos.Image != "" {
+									pos.Name = text
+								}
 							}
 						}
 					}

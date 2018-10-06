@@ -18,6 +18,23 @@
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:7c2fd446293ff7799cc496d3446e674ee67902d119f244de645caf95dff1bb98"
+  name = "github.com/go-redis/redis"
+  packages = [
+    ".",
+    "internal",
+    "internal/consistenthash",
+    "internal/hashtag",
+    "internal/pool",
+    "internal/proto",
+    "internal/singleflight",
+    "internal/util",
+  ]
+  pruneopts = "UT"
+  revision = "f3bba01df2026fc865f7782948845db9cf44cf23"
+  version = "v6.14.1"
+
+[[projects]]
   digest = "1:2f7d86b837288de980026af93be9a6fd9797c6b32f79af4484bc73f2e57b4ac4"
   name = "github.com/integrii/flaggy"
   packages = ["."]
@@ -75,6 +92,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/PuerkitoBio/goquery",
+    "github.com/go-redis/redis",
     "github.com/integrii/flaggy",
     "golang.org/x/net/html",
     "golang.org/x/text/encoding/htmlindex",

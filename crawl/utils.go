@@ -1,10 +1,12 @@
 package crawl
 
 import (
+	"bytes"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/html"
@@ -12,6 +14,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/zeronosyo/goffer/exc"
+	"github.com/zeronosyo/goffer/redis"
 	"github.com/zeronosyo/goffer/utils"
 )
 
@@ -69,7 +72,21 @@ func decodeResponse(body io.Reader, header http.Header) (*html.Node, error) {
 	return node, nil
 }
 
+func nodeToString(n *html.Node) string {
+	var buf bytes.Buffer
+	w := io.Writer(&buf)
+	html.Render(w, n)
+	return buf.String()
+}
+
 func QueryUrl(url string) (*goquery.Document, error) {
+	cacheBody, err := redis.GetCache(url)
+	if err == nil && cacheBody != "" {
+		body, err := html.Parse(strings.NewReader(cacheBody))
+		if err == nil {
+			return goquery.NewDocumentFromNode(body), nil
+		}
+	}
 	res, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -85,6 +102,7 @@ func QueryUrl(url string) (*goquery.Document, error) {
 	if err != nil {
 		return nil, err
 	}
+	redis.SetCache(url, nodeToString(body))
 	return goquery.NewDocumentFromNode(body), nil
 }
 

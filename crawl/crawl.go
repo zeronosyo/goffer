@@ -18,12 +18,12 @@ func init() {
 }
 
 type crawl struct {
-	url      *url.URL
-	doc      *goquery.Document
-	config   *Config
-	title    string
-	location string
-	content  []*position
+	url       *url.URL
+	doc       *goquery.Document
+	config    *Config
+	title     string
+	locations []string
+	content   []*position
 }
 
 func New(url *url.URL, doc *goquery.Document) (*crawl, error) {
@@ -57,22 +57,26 @@ func (c *crawl) contentProcess(processor func(int, *goquery.Selection)) {
 		})
 }
 
-func (c *crawl) Location() string {
-	if c.location != "" {
-		return c.location
+func (c *crawl) Locations() []string {
+	if c.locations != nil {
+		return c.locations
 	}
+	c.locations = make([]string, 0)
+	locationRegexps := make([]*regexp.Regexp, 0)
 	config := c.config
-	locationRegexp := regexp.MustCompile(config.Content.Location)
+	for _, loc := range config.Content.Locations {
+		locationRegexps = append(locationRegexps, regexp.MustCompile(loc))
+	}
 	c.contentProcess(func(i int, content *goquery.Selection) {
-		if c.location != "" {
-			return
-		}
-		match := locationRegexp.FindStringSubmatch(content.Text())
-		if len(match) > 1 {
-			c.location = match[1]
+		for _, regexp := range locationRegexps {
+			match := regexp.FindStringSubmatch(content.Text())
+			if len(match) > 1 {
+				c.locations = append(c.locations, match[1])
+				break
+			}
 		}
 	})
-	return c.location
+	return c.locations
 }
 
 func (c *crawl) Content() []*position {

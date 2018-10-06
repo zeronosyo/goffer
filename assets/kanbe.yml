@@ -8,7 +8,8 @@ content:
   selector:
     path: body > div.rightrepeat > div.leftrepeat > div
   start: ^\s*場所：
-  location: ^\s*場所：\s*(.*?)\s*$
+  locations:
+    - ^\s*場所：\s*(.*?)\s*$
   name: -1
   image:
     tag: img

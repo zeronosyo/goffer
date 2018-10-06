@@ -34,12 +34,12 @@ type Title struct {
 }
 
 type Content struct {
-	element  `yaml:",inline"`
-	Image    Selector `yaml:"image"`
-	Start    string   `yaml:"start"`
-	Location string   `yaml:"location"`
-	Name     int      `yaml:"name"`
-	Filter   []string `yaml:"filter"`
+	element   `yaml:",inline"`
+	Image     Selector `yaml:"image"`
+	Start     string   `yaml:"start"`
+	Locations []string `yaml:"locations"`
+	Name      int      `yaml:"name"`
+	Filter    []string `yaml:"filter"`
 }
 
 type End struct {

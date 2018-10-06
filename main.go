@@ -72,7 +72,7 @@ func main() {
 					fmt.Printf(
 						"Review %9s(%02d,%02d): %s(%s) - (%s) - %s\n",
 						centerText, i, j, c.Title(),
-						docUrl, c.Location(), content,
+						docUrl, c.Locations(), content,
 					)
 				}(i, j, centerText, href)
 			})

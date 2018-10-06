@@ -21,13 +21,17 @@ type Selector struct {
 	Tag  string `yaml:"tag"`
 }
 
+type element struct {
+	S Selector `yaml:"selector"`
+}
+
 type Title struct {
-	S     Selector `yaml:"selector"`
-	Index int      `yaml:"index"`
+	element `yaml:",inline"`
+	Index   int `yaml:"index"`
 }
 
 type Content struct {
-	S        Selector `yaml:"selector"`
+	element  `yaml:",inline"`
 	Image    Selector `yaml:"image"`
 	Start    string   `yaml:"start"`
 	Location string   `yaml:"location"`
@@ -36,7 +40,7 @@ type Content struct {
 }
 
 type End struct {
-	S Selector `yaml:"selector"`
+	element `yaml:",inline"`
 }
 
 type Config struct {

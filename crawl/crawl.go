@@ -67,6 +67,13 @@ type crawl struct {
 	page        []*url.URL
 }
 
+type CrawlContent struct {
+	Url       *url.URL
+	Title     string
+	Locations []string
+	Content   []*position
+}
+
 func New(docUrl *url.URL, doc *goquery.Document) (*crawl, error) {
 	var config *Config
 	for urlRegexp := range configMap {
@@ -84,6 +91,38 @@ func New(docUrl *url.URL, doc *goquery.Document) (*crawl, error) {
 		c.startRegexp = regexp.MustCompile("(?im)" + config.Content.Start)
 	}
 	return &c, nil
+}
+
+func Crawling(docUrl *url.URL) ([]*CrawlContent, error) {
+	crawlContent := make([]*CrawlContent, 0)
+	doc, err := QueryUrl(docUrl.String())
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("Query %s got error: %s\n", docUrl, err))
+	}
+	c, err := New(docUrl, doc)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("Crawling Got Error - %s\n", err))
+	}
+	if len(c.Page()) > 0 {
+		for _, p := range c.Page() {
+			cc, err := Crawling(p)
+			if err != nil {
+				continue
+			}
+			crawlContent = append(crawlContent, cc...)
+		}
+		return crawlContent, nil
+	}
+	if c.Title() == "" || len(c.Locations()) == 0 || len(c.Content()) == 0 {
+		return crawlContent, nil
+	}
+	crawlContent = append(crawlContent, &CrawlContent{
+		Url:       docUrl,
+		Title:     c.Title(),
+		Locations: c.Locations(),
+		Content:   c.Content(),
+	})
+	return crawlContent, nil
 }
 
 func (c *crawl) Title() string {

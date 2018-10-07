@@ -30,7 +30,8 @@ install: dep_ensure
 dep_ensure:
 	dep ensure
 
-test: lint
+test: install lint
+	goffer -c assets/kanbe.yml
 	@echo "Passed"
 
 clean:

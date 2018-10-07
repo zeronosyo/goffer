@@ -30,8 +30,7 @@ install: dep_ensure
 dep_ensure:
 	dep ensure
 
-test: install lint
-	goffer -d assets
+test: lint
 	@echo "Passed"
 
 clean:

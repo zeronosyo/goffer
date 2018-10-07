@@ -15,4 +15,4 @@ install:
   - go get -u github.com/alecthomas/gometalinter
   - gometalinter --install
 
-script: dep ensure && make test
+script: make test

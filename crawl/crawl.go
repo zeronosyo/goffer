@@ -18,12 +18,13 @@ func init() {
 }
 
 type crawl struct {
-	url       *url.URL
-	doc       *goquery.Document
-	config    *Config
-	title     string
-	locations []string
-	content   []*position
+	url         *url.URL
+	doc         *goquery.Document
+	config      *Config
+	title       string
+	locations   []string
+	content     []*position
+	startRegexp *regexp.Regexp
 }
 
 func New(url *url.URL, doc *goquery.Document) (*crawl, error) {
@@ -32,7 +33,11 @@ func New(url *url.URL, doc *goquery.Document) (*crawl, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &crawl{url: url, doc: doc, config: config}, nil
+	c := crawl{url: url, doc: doc, config: config}
+	if config.Content.Start != "" {
+		c.startRegexp = regexp.MustCompile("(?im)" + config.Content.Start)
+	}
+	return &c, nil
 }
 
 func (c *crawl) Title() string {
@@ -46,14 +51,30 @@ func (c *crawl) Title() string {
 	return title
 }
 
-func (c *crawl) contentProcess(processor func(int, *goquery.Selection)) {
+func (c *crawl) contentProcess(processor func(int, *goquery.Selection) bool) {
 	config := c.config
+	continuous := true
 	c.doc.Find(config.Content.S.Path).Contents().Each(
 		func(i int, content *goquery.Selection) {
-			processor(i, content)
+			if !continuous {
+				return
+			}
+			continuous = processor(i, content)
+			if !continuous {
+				return
+			}
 			content.Children().Each(func(i int, content *goquery.Selection) {
-				processor(i, content)
+				if !continuous {
+					return
+				}
+				continuous = processor(i, content)
+				if !continuous {
+					return
+				}
 			})
+			if !continuous {
+				return
+			}
 		})
 }
 
@@ -67,7 +88,7 @@ func (c *crawl) Locations() []string {
 	for _, loc := range config.Content.Locations {
 		locationRegexps = append(locationRegexps, regexp.MustCompile(loc))
 	}
-	c.contentProcess(func(i int, content *goquery.Selection) {
+	c.contentProcess(func(i int, content *goquery.Selection) bool {
 		for _, regexp := range locationRegexps {
 			match := regexp.FindStringSubmatch(content.Text())
 			if len(match) > 1 {
@@ -75,8 +96,52 @@ func (c *crawl) Locations() []string {
 				break
 			}
 		}
+		return true
 	})
 	return c.locations
+}
+
+// Ensure end elementif Return true otherwise return false
+func (c *crawl) ensureEnd(content *goquery.Selection) bool {
+	end := c.config.End.S
+	path := end.Path
+	attr_pair := strings.Split(end.Attr, "==")
+	tag := end.Tag
+	if path == "" && len(attr_pair) > 0 && tag == "" {
+		// without end symbol
+		return false
+	}
+	if path != "" && !content.Is(path) {
+		return false
+	}
+	if len(attr_pair) > 0 {
+		attr_key := strings.TrimSpace(attr_pair[0])
+		if attr_key != "" {
+			attr_value := content.AttrOr(attr_key, "")
+			if len(attr_pair) == 2 {
+				if attr_value != strings.TrimSpace(attr_pair[1]) {
+					return false
+				}
+			} else if attr_value == "" {
+				return false
+			}
+		}
+	}
+	if tag != "" {
+		if content.Nodes[0].Type != html.ElementNode || content.Nodes[0].Data != tag {
+			return false
+		}
+	}
+	return true
+}
+
+// Ensure start element if Return true otherwise return false
+func (c *crawl) ensureStart(content *goquery.Selection) bool {
+	if c.startRegexp == nil {
+		return true
+	}
+	indexes := c.startRegexp.FindStringSubmatchIndex(content.Text())
+	return len(indexes) > 0
 }
 
 func (c *crawl) Content() []*position {
@@ -85,62 +150,31 @@ func (c *crawl) Content() []*position {
 	}
 	c.content = make([]*position, 0)
 	config := c.config
-	startRegexp := regexp.MustCompile("(?im)" + config.Content.Start)
-	startFlag := false
-	endFlag := false
+	started := false
 	filters := make([]*regexp.Regexp, len(config.Content.Filter), len(config.Content.Filter))
 	for idx, reg := range config.Content.Filter {
 		filters[idx] = regexp.MustCompile("(?im)" + reg)
 	}
-	c.contentProcess(func(i int, content *goquery.Selection) {
-		if endFlag {
-			return
+	c.contentProcess(func(i int, content *goquery.Selection) bool {
+		if c.ensureEnd(content) {
+			// finish traverse content
+			return false
 		}
-		end := config.End.S
-		if end.Path != "" {
-			if content.Is(end.Path) {
-				endFlag = true
-				attr_pair := strings.Split(end.Attr, "==")
-				if len(attr_pair) > 0 {
-					attr_key := strings.TrimSpace(attr_pair[0])
-					if attr_key != "" {
-						attr_value := content.AttrOr(attr_key, "")
-						if len(attr_pair) == 2 {
-							if attr_value != strings.TrimSpace(attr_pair[1]) {
-								endFlag = false
-							}
-						} else if attr_value == "" {
-							endFlag = false
-						}
-					}
-				}
-				tag := end.Tag
-				if tag != "" {
-					if content.Nodes[0].Type != html.ElementNode || content.Nodes[0].Data != tag {
-						endFlag = false
-					}
-				}
-			}
+		if !started && !c.ensureStart(content) {
+			// skip to next iterate
+			return true
 		}
-		if endFlag {
-			return
-		}
-		if !startFlag {
-			indexes := startRegexp.FindStringSubmatchIndex(content.Text())
-			if len(indexes) > 0 {
-				startFlag = true
-			} else {
-				return
-			}
-		}
+		// started
+		started = true
 		for _, node := range content.Nodes {
 			switch {
 			case node.Type == html.ElementNode && node.Data == config.Content.Image.Tag:
+				// NOTE process image node
 				imageSrc := content.AttrOr("src", "")
 				if imageSrc != "" {
 					imageUrl, err := url.Parse(imageSrc)
 					if err != nil {
-						return
+						return true
 					}
 					imageUrl = c.url.ResolveReference(imageUrl)
 					pos := position{Image: imageUrl.String()}
@@ -158,6 +192,7 @@ func (c *crawl) Content() []*position {
 					c.content = append(c.content, &pos)
 				}
 			case (node.Type == html.ElementNode && node.Data != config.Content.Image.Tag) || node.Type == html.TextNode:
+				// NOTE process text node
 				text := strings.TrimSpace(content.Text())
 				for _, matcher := range filters {
 					if len(matcher.FindStringSubmatchIndex(text)) > 0 {
@@ -190,9 +225,10 @@ func (c *crawl) Content() []*position {
 			default:
 				// TODO raise exception
 				log.Fatalf("Got unknown node type %d", node.Type)
-				return
+				return false
 			}
 		}
+		return true
 	})
 	return c.content
 }

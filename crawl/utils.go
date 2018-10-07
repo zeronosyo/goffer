@@ -47,6 +47,7 @@ type End struct {
 }
 
 type Config struct {
+	Url     string  `yaml:"url"`
 	Title   Title   `yaml:"title"`
 	Content Content `yaml:"content"`
 	End     End     `yaml:"end"`

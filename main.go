@@ -14,12 +14,19 @@ import (
 	"github.com/zeronosyo/goffer/exc"
 )
 
-func main() {
+var cfgDir string
+
+func init() {
+	flaggy.String(&cfgDir, "d", "config-dir", "config files directory of crawler.")
 	flaggy.Parse()
+}
+
+func main() {
 	doc, err := crawl.QueryUrl("http://dotproducer.kan-be.com/seiti/seiti.html")
 	if err != nil {
 		log.Fatal(err)
 	}
+	crawl.Init(cfgDir)
 
 	var waitGroup sync.WaitGroup
 

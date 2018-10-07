@@ -3,18 +3,42 @@ package crawl
 import (
 	"log"
 	"net/url"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/integrii/flaggy"
 	"golang.org/x/net/html"
 )
 
-var cfgFn string
+var (
+	configMap map[*regexp.Regexp]*Config
+)
 
 func init() {
-	flaggy.String(&cfgFn, "c", "config", "config file of crawler.")
+	configMap = make(map[*regexp.Regexp]*Config)
+}
+
+func Init(cfgDir string) {
+	filepath.Walk(cfgDir, loadConfig)
+}
+
+func loadConfig(path string, f os.FileInfo, err error) error {
+	if err != nil {
+		log.Fatalf("Scan directory %s got error: %v", path, err)
+	}
+	if !f.IsDir() {
+		config, err := readConfigFile(path)
+		if err != nil {
+			return err
+		}
+		if config.Url != "" {
+			configMap[regexp.MustCompile("(?im)"+config.Url)] = config
+			log.Printf("loaded config: %v\n", path)
+		}
+	}
+	return nil
 }
 
 type crawl struct {
@@ -27,13 +51,18 @@ type crawl struct {
 	startRegexp *regexp.Regexp
 }
 
-func New(url *url.URL, doc *goquery.Document) (*crawl, error) {
-	// TODO: select and init config
-	config, err := readConfigFile(cfgFn)
-	if err != nil {
-		return nil, err
+func New(docUrl *url.URL, doc *goquery.Document) (*crawl, error) {
+	var config *Config
+	for urlRegexp := range configMap {
+		if len(urlRegexp.FindStringSubmatchIndex(docUrl.String())) > 0 {
+			config = configMap[urlRegexp]
+			break
+		}
 	}
-	c := crawl{url: url, doc: doc, config: config}
+	if config == nil {
+		log.Fatalf("No such config file for url: %v", docUrl)
+	}
+	c := crawl{url: docUrl, doc: doc, config: config}
 	if config.Content.Start != "" {
 		c.startRegexp = regexp.MustCompile("(?im)" + config.Content.Start)
 	}

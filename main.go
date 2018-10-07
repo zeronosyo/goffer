@@ -19,6 +19,42 @@ var cfgDir string
 func init() {
 	flaggy.String(&cfgDir, "d", "config-dir", "config files directory of crawler.")
 	flaggy.Parse()
+	crawl.Init(cfgDir)
+}
+
+func crawlQuery(docUrl *url.URL) {
+	doc, err := crawl.QueryUrl(docUrl.String())
+	if err != nil {
+		// log.Fatal(err)
+		fmt.Printf("Query %s got error: %s\n", docUrl, err)
+		return
+	}
+	c, err := crawl.New(docUrl, doc)
+	if err != nil {
+		fmt.Printf("Review Got Error - %s\n", err)
+		return
+	}
+	if len(c.Page()) > 0 {
+		fmt.Printf("RPage: %v, %d\n", docUrl, len(c.Page()))
+		for _, p := range c.Page() {
+			crawlQuery(p)
+		}
+		return
+	}
+	if c.Title() == "" || len(c.Locations()) == 0 || len(c.Content()) == 0 {
+		return
+	}
+	var content string
+	for idx, pos := range c.Content() {
+		if pos.Image == "" {
+			continue
+		}
+		content += fmt.Sprintf("%d: %s(%s),", idx, pos.Name, pos.Image)
+	}
+	fmt.Printf(
+		"Review %s(%s) - (%s) - %s - (%s)\n",
+		c.Title(), docUrl, c.Locations(), content, c.Page(),
+	)
 }
 
 func main() {
@@ -26,7 +62,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	crawl.Init(cfgDir)
 
 	var waitGroup sync.WaitGroup
 
@@ -47,7 +82,7 @@ func main() {
 			center.Find("a").Each(func(j int, a *goquery.Selection) {
 				href := a.AttrOr("href", "")
 				waitGroup.Add(1)
-				go func(i, j int, center_text, href string) {
+				go func(href string) {
 					defer waitGroup.Done()
 					if href == "" {
 						log.Fatal(exc.RaiseHttpExc(404, "No url"))
@@ -61,33 +96,8 @@ func main() {
 						return
 					}
 					docUrl = base.ResolveReference(docUrl)
-					doc, err := crawl.QueryUrl(docUrl.String())
-					if err != nil {
-						// log.Fatal(err)
-						fmt.Printf("Query %s got error: %s\n", docUrl, err)
-						return
-					}
-					c, err := crawl.New(docUrl, doc)
-					if err != nil {
-						fmt.Printf("Review %s(%02d,%02d): Got Error - %s\n", centerText, i, j, err)
-						return
-					}
-					if c.Title() == "" || len(c.Locations()) == 0 || len(c.Content()) == 0 {
-						return
-					}
-					var content string
-					for idx, pos := range c.Content() {
-						if pos.Image == "" {
-							continue
-						}
-						content += fmt.Sprintf("%d: %s(%s),", idx, pos.Name, pos.Image)
-					}
-					fmt.Printf(
-						"Review %9s(%02d,%02d): %s(%s) - (%s) - %s\n",
-						centerText, i, j, c.Title(),
-						docUrl, c.Locations(), content,
-					)
-				}(i, j, centerText, href)
+					crawlQuery(docUrl)
+				}(href)
 			})
 		})
 	waitGroup.Wait()

@@ -1,0 +1,21 @@
+---
+url:
+  - ^https?://dotproducer\.at-ninja\.jp(/[^/]+){2}\.html$
+  - ^https?://dotproducer\.nobu-naga\.net(/[^/]+){2}\.html$
+  - ^https?://dotproducer\.shin-gen\.jp(/[^/]+){2}\.html$
+  - ^https?://dotproducer\.hanagasumi\.net(/[^/]+){2}\.html$
+
+title:
+  selector:
+    path: body center
+  index: 0
+
+page:
+  selector:
+    path: body > div.rightrepeat > div.leftrepeat > div a
+
+end:
+  selector:
+    path: img
+    tag: img
+    attr: alt == TOP

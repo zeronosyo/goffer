@@ -46,11 +46,16 @@ type End struct {
 	element `yaml:",inline"`
 }
 
+type Page struct {
+	element `yaml:",inline"`
+}
+
 type Config struct {
-	Url     string  `yaml:"url"`
-	Title   Title   `yaml:"title"`
-	Content Content `yaml:"content"`
-	End     End     `yaml:"end"`
+	Url     []string `yaml:"url"`
+	Title   Title    `yaml:"title"`
+	Content Content  `yaml:"content"`
+	End     End      `yaml:"end"`
+	Page    Page     `yaml:"page"`
 }
 
 type position struct {

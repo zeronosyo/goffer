@@ -1,5 +1,12 @@
 ---
-url: https?://dotproducer\.[^\.]+\.(com|jp|net)
+url:
+  - ^https?://dotproducer\.kan-be.com/[^/]+(/[^/]+){2}\.html$
+  - ^https?://dotproducer\.at-ninja.jp/[^/]+(/[^/]+){2}\.html$
+  - ^https?://dotproducer\.rakugan\.com(/[^/]+){2}\.html$
+  - ^https?://dotproducer\.shin-gen\.jp/[^/]+(/[^/]+){2}\.html$
+  - ^https?://dotproducer\.nobu-naga\.net/[^/]+(/[^/]+){2}\.html$
+  - ^https?://dotproducer\.hanagasumi\.net/[^/]+(/[^/]+){2}\.html$
+
 title:
   selector:
     path: body center

@@ -1,6 +1,8 @@
 package crawl
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"net/url"
 	"os"
@@ -33,12 +35,25 @@ func loadConfig(path string, f os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		if config.Url != "" {
-			configMap[regexp.MustCompile("(?im)"+config.Url)] = config
+		if len(config.Url) > 0 {
+			for _, url := range config.Url {
+				configMap[regexp.MustCompile("(?im)"+url)] = config
+			}
 			log.Printf("loaded config: %v\n", path)
 		}
 	}
 	return nil
+}
+
+type content interface {
+	Title() string
+	Locations() []string
+	Content() []*position
+}
+
+type page interface {
+	Title() string
+	Page() []*url.URL
 }
 
 type crawl struct {
@@ -49,6 +64,7 @@ type crawl struct {
 	locations   []string
 	content     []*position
 	startRegexp *regexp.Regexp
+	page        []*url.URL
 }
 
 func New(docUrl *url.URL, doc *goquery.Document) (*crawl, error) {
@@ -60,7 +76,8 @@ func New(docUrl *url.URL, doc *goquery.Document) (*crawl, error) {
 		}
 	}
 	if config == nil {
-		log.Fatalf("No such config file for url: %v", docUrl)
+		// log.Fatalf("No such config file for url: %v", docUrl)
+		return nil, errors.New(fmt.Sprintf("No such config file for url: %v", docUrl))
 	}
 	c := crawl{url: docUrl, doc: doc, config: config}
 	if config.Content.Start != "" {
@@ -130,7 +147,7 @@ func (c *crawl) Locations() []string {
 	return c.locations
 }
 
-// Ensure end elementif Return true otherwise return false
+// Ensure end element if Return true otherwise return false
 func (c *crawl) ensureEnd(content *goquery.Selection) bool {
 	end := c.config.End.S
 	path := end.Path
@@ -174,6 +191,9 @@ func (c *crawl) ensureStart(content *goquery.Selection) bool {
 }
 
 func (c *crawl) Content() []*position {
+	if c.config.Content.element == (element{}) {
+		return nil
+	}
 	if c.content != nil {
 		return c.content
 	}
@@ -260,4 +280,22 @@ func (c *crawl) Content() []*position {
 		return true
 	})
 	return c.content
+}
+
+func (c *crawl) Page() []*url.URL {
+	if c.config.Page.element == (element{}) {
+		return nil
+	}
+	if c.page != nil {
+		return c.page
+	}
+	c.page = make([]*url.URL, 0)
+	c.doc.Find(c.config.Page.S.Path).Each(func(i int, content *goquery.Selection) {
+		contentUrl, err := url.Parse(content.AttrOr("href", ""))
+		if err != nil {
+			log.Fatal(err)
+		}
+		c.page = append(c.page, c.url.ResolveReference(contentUrl))
+	})
+	return c.page
 }
